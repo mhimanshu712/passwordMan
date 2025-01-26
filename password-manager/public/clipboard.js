@@ -171,8 +171,51 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Settings button (vault access)
-    settingsBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
+    let rightClickCount = 0;
+    let rightClickTimer = null;
+    let leftClickCount = 0;
+    let leftClickTimer = null;
+
+    settingsBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault(); // Prevent the context menu from showing
+        
+        rightClickCount++;
+        
+        if (rightClickCount === 1) {
+            rightClickTimer = setTimeout(() => {
+                rightClickCount = 0;
+            }, 500); // Reset after 500ms if no second click
+        } else if (rightClickCount === 2) {
+            clearTimeout(rightClickTimer);
+            rightClickCount = 0;
+            window.location.href = 'vault.html';
+        }
+    });
+
+    // Regular click counter for vault access
+    settingsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        leftClickCount++;
+
+        // Reset the timer if it exists
+        if (leftClickTimer) {
+            clearTimeout(leftClickTimer);
+        }
+
+        // Start a new timer to reset the count after 3 seconds
+        leftClickTimer = setTimeout(() => {
+            if (leftClickCount < 7) {
+                showNotification('Settings not available', true);
+            }
+            leftClickCount = 0;
+        }, 3000);
+
+        // If we reach 10 clicks, open vault
+        if (leftClickCount === 10) {
+            clearTimeout(leftClickTimer);
+            leftClickCount = 0;
+            window.location.href = 'vault.html';
+        }
     });
 
     // Utility Functions
