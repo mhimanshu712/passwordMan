@@ -9,6 +9,9 @@ const fs = require('fs');
 const initSqlJs = require('sql.js');
 
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+
 const PORT = process.env.PORT || 3000;
 
 let db;
@@ -77,6 +80,72 @@ const authenticateToken = (req, res, next) => {
         res.status(401).json({ error: 'Invalid token' });
     }
 };
+
+// Store room information
+const rooms = new Map();
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+    let currentRoom = null;
+
+    socket.on('joinRoom', (roomId) => {
+        // Leave previous room if any
+        if (currentRoom) {
+            socket.leave(currentRoom);
+            updateRoomUsers(currentRoom);
+        }
+
+        // Join new room
+        currentRoom = roomId;
+        socket.join(roomId);
+
+        // Initialize room if it doesn't exist
+        if (!rooms.has(roomId)) {
+            rooms.set(roomId, {
+                users: new Set(),
+                clipboard: ''
+            });
+        }
+
+        // Add user to room
+        const room = rooms.get(roomId);
+        room.users.add(socket.id);
+
+        // Send current clipboard content to new user
+        socket.emit('clipboardUpdate', room.clipboard);
+
+        // Update user count for all clients in the room
+        updateRoomUsers(roomId);
+    });
+
+    socket.on('updateClipboard', ({ room, text }) => {
+        if (rooms.has(room)) {
+            rooms.get(room).clipboard = text;
+            socket.to(room).emit('clipboardUpdate', text);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (currentRoom && rooms.has(currentRoom)) {
+            const room = rooms.get(currentRoom);
+            room.users.delete(socket.id);
+
+            // Clean up empty rooms
+            if (room.users.size === 0) {
+                rooms.delete(currentRoom);
+            } else {
+                updateRoomUsers(currentRoom);
+            }
+        }
+    });
+});
+
+function updateRoomUsers(roomId) {
+    if (rooms.has(roomId)) {
+        const userCount = rooms.get(roomId).users.size;
+        io.to(roomId).emit('roomUsers', userCount);
+    }
+}
 
 // Routes
 app.post('/api/register', async (req, res) => {
@@ -195,9 +264,12 @@ app.get('/', (req, res) => {
 
 // Initialize database before starting server
 initDb().then(() => {
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
+}).catch(err => {
+    console.error('Failed to initialize database:', err);
+    process.exit(1);
 });
 
 // Cleanup function for graceful shutdown

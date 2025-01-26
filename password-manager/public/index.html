@@ -3,136 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureVault - Password Manager</title>
+    <title>Shared Clipboard Pro</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7v-2z'/></svg>">
+    <link rel="stylesheet" href="clipboard.css">
 </head>
 <body>
-    <div class="container">
-        <div id="auth-section">
-            <h1>
-                <i class="ri-shield-keyhole-line"></i>
-                SecureVault
-            </h1>
-            <div class="auth-forms">
-                <div id="login-form">
-                    <h2>Welcome Back</h2>
-                    <p class="subtitle">Enter your credentials to access your vault</p>
-                    <form onsubmit="return handleLogin(event)">
-                        <div class="input-group">
-                            <i class="ri-user-line"></i>
-                            <input type="text" id="login-username" placeholder="Username" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="ri-lock-password-line"></i>
-                            <input type="password" id="login-password" placeholder="Master Password" required>
-                        </div>
-                        <button type="submit">
-                            <i class="ri-login-circle-line"></i>
-                            Login
-                        </button>
-                    </form>
-                    <p class="text-center">Don't have an account? <a href="#" onclick="toggleForms()">Create Account</a></p>
-                </div>
-
-                <div id="register-form" style="display: none;">
-                    <h2>Create Account</h2>
-                    <p class="subtitle">Set up your secure vault today</p>
-                    <form onsubmit="return handleRegister(event)">
-                        <div class="input-group">
-                            <i class="ri-user-add-line"></i>
-                            <input type="text" id="register-username" placeholder="Choose Username" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="ri-lock-password-line"></i>
-                            <input type="password" id="register-password" placeholder="Create Master Password" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="ri-checkbox-circle-line"></i>
-                            <input type="password" id="confirm-password" placeholder="Confirm Master Password" required>
-                        </div>
-                        <button type="submit">
-                            <i class="ri-user-add-line"></i>
-                            Create Account
-                        </button>
-                    </form>
-                    <p class="text-center">Already have an account? <a href="#" onclick="toggleForms()">Login</a></p>
-                </div>
+    <div class="clipboard-container">
+        <div class="header">
+            <div class="header-left">
+                <h1><i class="ri-clipboard-line"></i> Shared Clipboard Pro</h1>
+                <span class="status-indicator" id="connectionStatus">
+                    <i class="ri-wifi-line"></i> Connected
+                </span>
+            </div>
+            <div class="header-right">
+                <button id="shareBtn" class="action-btn secondary">
+                    <i class="ri-share-line"></i>
+                    Share Room
+                </button>
+                <button id="settingsBtn" class="settings-btn">
+                    <i class="ri-settings-3-line"></i>
+                </button>
             </div>
         </div>
 
-        <div id="password-section" style="display: none;">
-            <div class="header">
-                <div class="header-left">
-                    <h2>
-                        <i class="ri-shield-keyhole-line"></i>
-                        Password Vault
-                    </h2>
+        <div class="room-info" id="roomInfo">
+            <i class="ri-group-line"></i>
+            Room: <span id="roomId">Loading...</span>
+            <span class="separator">•</span>
+            <span id="activeUsers">1</span> active
+        </div>
+
+        <div class="clipboard-content">
+            <div class="clipboard-item">
+                <div class="textarea-wrapper">
+                    <textarea id="clipboardText" placeholder="Type or paste text here to share with room members..."></textarea>
+                    <div class="format-toolbar">
+                        <button class="format-btn" title="Clear Formatting">
+                            <i class="ri-format-clear"></i>
+                        </button>
+                        <button class="format-btn" title="Word Wrap">
+                            <i class="ri-text-wrap"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="header-right">
-                    <button onclick="logout()" class="logout-btn">
-                        <i class="ri-logout-circle-line"></i>
-                        Logout
+                <div class="button-group">
+                    <button id="copyBtn" class="action-btn primary">
+                        <i class="ri-file-copy-line"></i> Copy to Clipboard
+                    </button>
+                    <button id="clearBtn" class="action-btn secondary">
+                        <i class="ri-delete-bin-line"></i> Clear
                     </button>
                 </div>
             </div>
 
-            <div class="dashboard-grid">
-                <div class="add-password">
-                    <h3>
-                        <i class="ri-add-circle-line"></i>
-                        Add New Password
-                    </h3>
-                    <form onsubmit="return handleAddPassword(event)">
-                        <div class="input-group">
-                            <i class="ri-global-line"></i>
-                            <input type="text" id="site" placeholder="Website/Application" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="ri-user-line"></i>
-                            <input type="text" id="username" placeholder="Username/Email" required>
-                        </div>
-                        <div class="input-group">
-                            <i class="ri-lock-password-line"></i>
-                            <input type="password" id="password" placeholder="Password" required>
-                        </div>
-                        <button type="submit">
-                            <i class="ri-save-line"></i>
-                            Save Password
-                        </button>
-                    </form>
+            <div class="history-section">
+                <div class="history-header">
+                    <h3><i class="ri-history-line"></i> Recent Clips</h3>
+                    <button id="clearHistoryBtn" class="text-btn">Clear History</button>
                 </div>
-
-                <div class="password-list">
-                    <h3>
-                        <i class="ri-key-2-line"></i>
-                        Saved Passwords
-                    </h3>
-                    <div class="search-bar">
-                        <i class="ri-search-line"></i>
-                        <input type="text" id="password-search" placeholder="Search passwords..." oninput="filterPasswords(event)">
-                    </div>
-                    <div id="passwords-container"></div>
+                <div id="clipHistory" class="clip-history">
+                    <!-- Clip history items will be added here dynamically -->
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="dialog-overlay" id="dialog-overlay" style="display: none;">
-        <div class="dialog">
-            <h3 id="dialog-title"></h3>
-            <p id="dialog-message"></p>
-            <div class="dialog-buttons">
-                <button id="dialog-cancel" class="dialog-button">Cancel</button>
-                <button id="dialog-confirm" class="dialog-button primary">Confirm</button>
+    <!-- Modal for sharing room -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Share Room</h3>
+                <button class="close-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Share this room ID with others to collaborate:</p>
+                <div class="share-input">
+                    <input type="text" id="shareRoomId" readonly>
+                    <button id="copyRoomId" class="action-btn primary">
+                        <i class="ri-file-copy-line"></i> Copy
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="toast" id="toast" style="display: none;"></div>
+    <div id="notifications" class="notifications"></div>
     
-    <script src="app.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="clipboard.js"></script>
 </body>
 </html>
