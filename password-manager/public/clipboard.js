@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const clipboardText = document.getElementById('clipboardText');
     const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
     const clearBtn = document.getElementById('clearBtn');
     const clipHistory = document.getElementById('clipHistory');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -39,7 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('clipboardUpdate', (text) => {
         if (text !== clipboardText.value) {
             clipboardText.value = text;
-            addToHistory(text, false);
             showNotification('New clipboard content received');
         }
     });
@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clipboardText.addEventListener('input', debounce(() => {
         const text = clipboardText.value;
         socket.emit('updateClipboard', { room: currentRoom, text });
-        addToHistory(text, true);
     }, 500));
 
     copyBtn.addEventListener('click', async () => {
@@ -62,11 +61,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await navigator.clipboard.writeText(text);
             showNotification('Copied to clipboard!');
-            addToHistory(text, true);
         } catch (err) {
             showNotification('Failed to copy text', true);
             console.error('Failed to copy text:', err);
         }
+    });
+
+    saveBtn.addEventListener('click', () => {
+        const text = clipboardText.value.trim();
+        if (!text) {
+            showNotification('Nothing to save', true);
+            return;
+        }
+        addToHistory(text);
+        showNotification('Saved to history!');
     });
 
     clearBtn.addEventListener('click', () => {
@@ -169,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem(`clipboardHistory_${currentRoom}`, JSON.stringify(clipboardHistory));
     }
 
-    function addToHistory(text, save = true) {
+    function addToHistory(text) {
         if (!text) return;
         
         // Remove duplicate if exists
@@ -183,9 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clipboardHistory.pop();
         }
         
-        if (save) {
-            saveHistory();
-        }
+        saveHistory();
         updateHistoryDisplay();
     }
 

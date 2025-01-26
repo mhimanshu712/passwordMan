@@ -18,6 +18,10 @@
                 </span>
             </div>
             <div class="header-right">
+                <button id="changeRoomBtn" class="action-btn secondary">
+                    <i class="ri-door-line"></i>
+                    Change Room
+                </button>
                 <button id="shareBtn" class="action-btn secondary">
                     <i class="ri-share-line"></i>
                     Share Room
@@ -50,7 +54,10 @@
                 </div>
                 <div class="button-group">
                     <button id="copyBtn" class="action-btn primary">
-                        <i class="ri-file-copy-line"></i> Copy to Clipboard
+                        <i class="ri-file-copy-line"></i> Copy
+                    </button>
+                    <button id="saveBtn" class="action-btn dark">
+                        <i class="ri-save-line"></i> Save
                     </button>
                     <button id="clearBtn" class="action-btn secondary">
                         <i class="ri-delete-bin-line"></i> Clear
@@ -60,7 +67,7 @@
 
             <div class="history-section">
                 <div class="history-header">
-                    <h3><i class="ri-history-line"></i> Recent Clips</h3>
+                    <h3><i class="ri-history-line"></i> Saved Clips</h3>
                     <button id="clearHistoryBtn" class="text-btn">Clear History</button>
                 </div>
                 <div id="clipHistory" class="clip-history">
@@ -83,6 +90,25 @@
                     <input type="text" id="shareRoomId" readonly>
                     <button id="copyRoomId" class="action-btn primary">
                         <i class="ri-file-copy-line"></i> Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for changing room -->
+    <div id="changeRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Room</h3>
+                <button class="close-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Enter a room ID to join:</p>
+                <div class="share-input">
+                    <input type="text" id="newRoomId" placeholder="Enter room ID">
+                    <button id="joinRoomBtn" class="action-btn primary">
+                        <i class="ri-login-box-line"></i> Join
                     </button>
                 </div>
             </div>
