@@ -89,12 +89,6 @@ io.on('connection', (socket) => {
     let currentRoom = null;
 
     socket.on('joinRoom', (roomId) => {
-        // Leave previous room if any
-        if (currentRoom) {
-            socket.leave(currentRoom);
-            updateRoomUsers(currentRoom);
-        }
-
         // Join new room
         currentRoom = roomId;
         socket.join(roomId);
@@ -118,6 +112,21 @@ io.on('connection', (socket) => {
         updateRoomUsers(roomId);
     });
 
+    socket.on('leaveRoom', (roomId) => {
+        if (rooms.has(roomId)) {
+            const room = rooms.get(roomId);
+            room.users.delete(socket.id);
+            socket.leave(roomId);
+
+            // Clean up empty rooms (except default room)
+            if (room.users.size === 0 && roomId !== 'SHARED-CLIPBOARD-01') {
+                rooms.delete(roomId);
+            } else {
+                updateRoomUsers(roomId);
+            }
+        }
+    });
+
     socket.on('updateClipboard', ({ room, text }) => {
         if (rooms.has(room)) {
             rooms.get(room).clipboard = text;
@@ -130,8 +139,8 @@ io.on('connection', (socket) => {
             const room = rooms.get(currentRoom);
             room.users.delete(socket.id);
 
-            // Clean up empty rooms
-            if (room.users.size === 0) {
+            // Clean up empty rooms (except default room)
+            if (room.users.size === 0 && currentRoom !== 'SHARED-CLIPBOARD-01') {
                 rooms.delete(currentRoom);
             } else {
                 updateRoomUsers(currentRoom);

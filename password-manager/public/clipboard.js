@@ -7,26 +7,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const clipHistory = document.getElementById('clipHistory');
     const settingsBtn = document.getElementById('settingsBtn');
     const shareBtn = document.getElementById('shareBtn');
+    const changeRoomBtn = document.getElementById('changeRoomBtn');
     const shareModal = document.getElementById('shareModal');
+    const changeRoomModal = document.getElementById('changeRoomModal');
     const shareRoomId = document.getElementById('shareRoomId');
+    const newRoomId = document.getElementById('newRoomId');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
     const copyRoomId = document.getElementById('copyRoomId');
-    const closeModalBtn = document.querySelector('.close-btn');
+    const closeModalBtns = document.querySelectorAll('.close-btn');
     const connectionStatus = document.getElementById('connectionStatus');
     const roomIdDisplay = document.getElementById('roomId');
     const activeUsersDisplay = document.getElementById('activeUsers');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
+    // Constants
+    const DEFAULT_ROOM = 'SHARED-CLIPBOARD-01';
+
     // Socket.io connection
     const socket = io();
     let currentRoom = null;
 
-    // Connect to a random room or join existing
+    // Join room function
+    function joinRoom(roomId) {
+        if (currentRoom === roomId) return;
+        
+        const oldRoom = currentRoom;
+        currentRoom = roomId;
+        
+        if (oldRoom) {
+            socket.emit('leaveRoom', oldRoom);
+            clipboardText.value = '';
+        }
+        
+        socket.emit('joinRoom', roomId);
+        roomIdDisplay.textContent = roomId;
+        shareRoomId.value = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+        
+        // Load history for new room
+        loadHistory();
+        
+        // Update URL without reloading
+        const url = new URL(window.location);
+        url.searchParams.set('room', roomId);
+        window.history.pushState({}, '', url);
+    }
+
+    // Connect to room from URL or use default
     const urlParams = new URLSearchParams(window.location.search);
-    const roomId = urlParams.get('room') || generateRoomId();
-    currentRoom = roomId;
-    socket.emit('joinRoom', roomId);
-    roomIdDisplay.textContent = roomId;
-    shareRoomId.value = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+    const roomId = urlParams.get('room') || DEFAULT_ROOM;
+    joinRoom(roomId);
 
     // Socket event handlers
     socket.on('connect', () => {
@@ -87,8 +116,34 @@ document.addEventListener('DOMContentLoaded', () => {
         shareModal.classList.add('active');
     });
 
-    closeModalBtn.addEventListener('click', () => {
-        shareModal.classList.remove('active');
+    changeRoomBtn.addEventListener('click', () => {
+        changeRoomModal.classList.add('active');
+        newRoomId.value = '';
+        setTimeout(() => newRoomId.focus(), 100);
+    });
+
+    joinRoomBtn.addEventListener('click', () => {
+        const newRoom = newRoomId.value.trim().toUpperCase();
+        if (!newRoom) {
+            showNotification('Please enter a room ID', true);
+            return;
+        }
+        joinRoom(newRoom);
+        changeRoomModal.classList.remove('active');
+        showNotification(`Joined room ${newRoom}`);
+    });
+
+    newRoomId.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            joinRoomBtn.click();
+        }
+    });
+
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            shareModal.classList.remove('active');
+            changeRoomModal.classList.remove('active');
+        });
     });
 
     copyRoomId.addEventListener('click', async () => {
@@ -105,10 +160,13 @@ document.addEventListener('DOMContentLoaded', () => {
         showNotification('History cleared');
     });
 
-    // Handle clicking outside modal
+    // Handle clicking outside modals
     window.addEventListener('click', (e) => {
         if (e.target === shareModal) {
             shareModal.classList.remove('active');
+        }
+        if (e.target === changeRoomModal) {
+            changeRoomModal.classList.remove('active');
         }
     });
 
