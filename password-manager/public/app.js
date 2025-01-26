@@ -3,24 +3,44 @@ function toggleForms() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     
-    if (loginForm.style.display === 'none') {
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-    } else {
-        loginForm.style.display = 'none';
-        registerForm.style.display = 'block';
-    }
+    const forms = [loginForm, registerForm];
+    forms.forEach(form => {
+        form.style.opacity = '0';
+        setTimeout(() => {
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            form.style.opacity = '1';
+        }, 300);
+    });
 }
 
 function showPasswordSection() {
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('password-section').style.display = 'block';
+    const authSection = document.getElementById('auth-section');
+    const passwordSection = document.getElementById('password-section');
+    
+    authSection.style.opacity = '0';
+    setTimeout(() => {
+        authSection.style.display = 'none';
+        passwordSection.style.display = 'block';
+        setTimeout(() => {
+            passwordSection.style.opacity = '1';
+        }, 50);
+    }, 300);
+    
     loadPasswords();
 }
 
 function showAuthSection() {
-    document.getElementById('auth-section').style.display = 'block';
-    document.getElementById('password-section').style.display = 'none';
+    const authSection = document.getElementById('auth-section');
+    const passwordSection = document.getElementById('password-section');
+    
+    passwordSection.style.opacity = '0';
+    setTimeout(() => {
+        passwordSection.style.display = 'none';
+        authSection.style.display = 'block';
+        setTimeout(() => {
+            authSection.style.opacity = '1';
+        }, 50);
+    }, 300);
 }
 
 // Dialog and Toast Functions
@@ -37,23 +57,33 @@ function showDialog(title, message, showCancel = true) {
         cancelBtn.style.display = showCancel ? 'block' : 'none';
 
         const closeDialog = (result) => {
-            overlay.style.display = 'none';
-            resolve(result);
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.style.opacity = '1';
+                resolve(result);
+            }, 200);
         };
 
         cancelBtn.onclick = () => closeDialog(false);
         confirmBtn.onclick = () => closeDialog(true);
+        
         overlay.style.display = 'flex';
     });
 }
 
-function showToast(message, duration = 3000) {
+function showToast(message, type = 'info', duration = 3000) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
+    toast.className = 'toast ' + type;
     toast.style.display = 'block';
     
     setTimeout(() => {
-        toast.style.display = 'none';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.style.display = 'none';
+            toast.style.opacity = '1';
+        }, 300);
     }, duration);
 }
 
@@ -80,7 +110,7 @@ async function handleRegister(event) {
         const data = await response.json();
         
         if (response.ok) {
-            showToast('Registration successful! Please login.');
+            showToast('Registration successful! Please login.', 'success');
             toggleForms();
         } else {
             await showDialog('Error', data.error || 'Registration failed', false);
@@ -107,7 +137,7 @@ async function handleLogin(event) {
         const data = await response.json();
         
         if (response.ok) {
-            showToast('Login successful!');
+            showToast('Login successful!', 'success');
             showPasswordSection();
         } else {
             await showDialog('Error', data.error || 'Login failed', false);
@@ -119,8 +149,8 @@ async function handleLogin(event) {
 }
 
 function logout() {
-    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     showAuthSection();
+    showToast('Logged out successfully', 'info');
 }
 
 // Password Management Functions
@@ -141,10 +171,8 @@ async function handleAddPassword(event) {
         const data = await response.json();
         
         if (response.ok) {
-            document.getElementById('site').value = '';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            showToast('Password saved successfully!');
+            showToast('Password saved successfully!', 'success');
+            event.target.reset();
             loadPasswords();
         } else {
             await showDialog('Error', data.error || 'Failed to save password', false);
@@ -173,45 +201,51 @@ async function loadPasswords() {
 function displayPasswords(passwords) {
     const container = document.getElementById('passwords-container');
     container.innerHTML = '';
+    
+    if (passwords.length === 0) {
+        container.innerHTML = '<p class="no-passwords">No passwords saved yet. Add your first password above!</p>';
+        return;
+    }
 
     passwords.forEach(({ site, username, password }) => {
         const item = document.createElement('div');
         item.className = 'password-item';
-        
         item.innerHTML = `
             <div class="password-details">
-                <h4>${site}</h4>
-                <p>Username: ${username}</p>
-                <p>Password: ${'•'.repeat(8)}</p>
+                <div class="site-name">${site}</div>
+                <div class="username">${username}</div>
             </div>
             <div class="password-actions">
-                <button class="show-password" onclick="togglePasswordVisibility(this, '${password}')">Show</button>
-                <button class="copy-password" onclick="copyToClipboard('${password}')">Copy</button>
-                <button class="delete-password" onclick="deletePassword('${site}')">Delete</button>
+                <button onclick="togglePasswordVisibility(this, '${password}')" class="show-password">
+                    <i class="ri-eye-line"></i>
+                </button>
+                <button onclick="copyToClipboard('${password}')" class="copy-password">
+                    <i class="ri-file-copy-line"></i>
+                </button>
+                <button onclick="deletePassword('${site}')" class="delete-password">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
             </div>
         `;
-        
         container.appendChild(item);
     });
 }
 
 async function deletePassword(site) {
-    const confirmed = await showDialog('Confirm Delete', 'Are you sure you want to delete this password?');
-    if (!confirmed) {
-        return;
-    }
+    const confirmed = await showDialog('Delete Password', `Are you sure you want to delete the password for ${site}?`);
+    
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/api/passwords/${encodeURIComponent(site)}`, {
             method: 'DELETE'
         });
-
-        const data = await response.json();
         
         if (response.ok) {
-            showToast('Password deleted successfully!');
+            showToast('Password deleted successfully', 'success');
             loadPasswords();
         } else {
+            const data = await response.json();
             await showDialog('Error', data.error || 'Failed to delete password', false);
         }
     } catch (error) {
@@ -220,21 +254,47 @@ async function deletePassword(site) {
 }
 
 function togglePasswordVisibility(button, password) {
-    const passwordText = button.parentElement.parentElement.querySelector('p:last-child');
-    if (button.textContent === 'Show') {
-        passwordText.textContent = `Password: ${password}`;
-        button.textContent = 'Hide';
+    const icon = button.querySelector('i');
+    if (icon.classList.contains('ri-eye-line')) {
+        icon.classList.replace('ri-eye-line', 'ri-eye-off-line');
+        button.setAttribute('data-tooltip', 'Hide password');
+        button.innerHTML = `<i class="ri-eye-off-line"></i> ${password}`;
     } else {
-        passwordText.textContent = `Password: ${'•'.repeat(8)}`;
-        button.textContent = 'Show';
+        icon.classList.replace('ri-eye-off-line', 'ri-eye-line');
+        button.setAttribute('data-tooltip', 'Show password');
+        button.innerHTML = `<i class="ri-eye-line"></i>`;
     }
 }
 
 async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
-        showToast('Password copied to clipboard!');
+        showToast('Password copied to clipboard!', 'success');
     } catch (err) {
-        await showDialog('Error', 'Failed to copy password', false);
+        showToast('Failed to copy password', 'error');
     }
 }
+
+function filterPasswords(event) {
+    const searchTerm = event.target.value.toLowerCase();
+    const items = document.querySelectorAll('.password-item');
+    
+    items.forEach(item => {
+        const site = item.querySelector('.site-name').textContent.toLowerCase();
+        const username = item.querySelector('.username').textContent.toLowerCase();
+        
+        if (site.includes(searchTerm) || username.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Add smooth transitions for initial load
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        document.body.style.opacity = '1';
+    }, 50);
+});
