@@ -370,3 +370,99 @@ body {
         opacity: 1;
     }
 }
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .clipboard-container {
+        padding: 12px;
+        max-width: 100%;
+        margin: 0;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .header h1 {
+        font-size: 1.25rem;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .action-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .button-group {
+        flex-wrap: wrap;
+    }
+
+    .textarea-wrapper {
+        min-height: 200px;
+    }
+
+    .modal-content {
+        width: 90%;
+        margin: 20px;
+        max-height: 90vh;
+    }
+
+    .share-input {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .share-input input {
+        width: 100%;
+    }
+
+    .share-input button {
+        width: 100%;
+    }
+
+    .room-info {
+        font-size: 0.875rem;
+    }
+
+    .history-section {
+        margin-top: 16px;
+    }
+
+    .clip-history {
+        max-height: 200px;
+    }
+
+    .clip-item {
+        padding: 8px;
+    }
+}
+
+/* Additional small screen adjustments */
+@media screen and (max-width: 480px) {
+    .header-right {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .header-right button {
+        flex: 1;
+        min-width: calc(50% - 4px);
+    }
+
+    .button-group {
+        gap: 8px;
+    }
+
+    .button-group button {
+        flex: 1;
+        min-width: calc(50% - 4px);
+    }
+}
